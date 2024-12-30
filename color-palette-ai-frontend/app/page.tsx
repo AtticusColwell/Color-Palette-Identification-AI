@@ -10,6 +10,10 @@ const Home: React.FC = () => {
     router.push("/color-wheel"); // Navigate to the color-wheel page
   };
 
+  const handleSignUpClick = () => {
+    router.push("/sign-up"); // Navigate to the sign-up page
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-500 to-purple-700">
       <nav className="p-6 flex justify-between items-center">
@@ -17,9 +21,12 @@ const Home: React.FC = () => {
           <Palette className="h-8 w-8" />
           ColorPaletteAI
         </div>
-        <button className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm transition-all">
+        <button
+          className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 backdrop-blur-sm transition-all"
+          onClick={handleSignUpClick} // Attach the sign-up handler
+        >
           <LogIn className="h-4 w-4" />
-          Sign In
+          Sign Up
         </button>
       </nav>
       <main className="container mx-auto px-6 py-12 text-center">
@@ -72,4 +79,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
