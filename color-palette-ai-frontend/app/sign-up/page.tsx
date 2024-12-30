@@ -1,7 +1,9 @@
 "use client";
+
 import React, { useState } from "react";
 import { Upload, Camera } from "lucide-react";
 import { useDropzone } from "react-dropzone";
+import { supabase } from "./supabaseClient";
 
 const App: React.FC = () => {
   const [formData, setFormData] = useState<{
@@ -19,6 +21,8 @@ const App: React.FC = () => {
   });
 
   const [preview, setPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const onDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -29,9 +33,33 @@ const App: React.FC = () => {
     onDrop,
     accept: {
       "image/*": [".png", ".jpg", ".jpeg", ".gif"],
-    }, // Updated to match the expected type
+    },
     maxFiles: 1,
   });
+
+  const handleCreateAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    const { email, password, confirmPassword } = formData;
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccess("Account created successfully! Please check your email for confirmation.");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-12">
@@ -41,7 +69,7 @@ const App: React.FC = () => {
         </h1>
         <div className="grid gap-12 md:grid-cols-2">
           <div>
-            <form className="space-y-6">
+            <form className="space-y-6" onSubmit={handleCreateAccount}>
               <div className="grid gap-6 md:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
@@ -117,6 +145,16 @@ const App: React.FC = () => {
                   required
                 />
               </div>
+              {error && <p className="text-red-600">{error}</p>}
+              {success && <p className="text-green-600">{success}</p>}
+              <div className="mt-8 text-center">
+                <button
+                  type="submit"
+                  className="rounded-lg bg-blue-600 px-8 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Create Account
+                </button>
+              </div>
             </form>
           </div>
           <div>
@@ -172,14 +210,6 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
-        <div className="mt-8 text-center">
-          <button
-            type="submit"
-            className="rounded-lg bg-blue-600 px-8 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Create Account
-          </button>
         </div>
       </div>
     </main>
