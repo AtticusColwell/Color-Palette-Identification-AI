@@ -35,6 +35,7 @@ export function ColorWheel({ onColorSelect }: ColorWheelProps) {
   const colors = generateColors(52);
 
   // Handle click events
+  // good template for click
   const handleColorClick = (color: Color) => {
     setSelectedColorId(color.id); // Set the selected slice by ID
     onColorSelect(color); // Pass the selected color to the parent
