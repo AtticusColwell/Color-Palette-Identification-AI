@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 
 interface Color {
+  id: number; // Add a unique identifier
   name: string;
   hex: string;
 }
@@ -11,7 +12,7 @@ interface ColorWheelProps {
 }
 
 export function ColorWheel({ onColorSelect }: ColorWheelProps) {
-  const [selectedColor, setSelectedColor] = useState<Color | null>(null);
+  const [selectedColorId, setSelectedColorId] = useState<number | null>(null);
 
   // Generate 52 evenly spaced colors
   const generateColors = (count: number) => {
@@ -23,6 +24,7 @@ export function ColorWheel({ onColorSelect }: ColorWheelProps) {
 
     for (let i = 0; i < count; i++) {
       colors.push({
+        id: i, // Assign a unique ID to each slice
         name: `Color ${i + 1}`,
         hex: baseColors[i % baseColors.length], // Cycle through base colors
       });
@@ -34,8 +36,8 @@ export function ColorWheel({ onColorSelect }: ColorWheelProps) {
 
   // Handle click events
   const handleColorClick = (color: Color) => {
-    setSelectedColor(color);
-    onColorSelect(color);
+    setSelectedColorId(color.id); // Set the selected slice by ID
+    onColorSelect(color); // Pass the selected color to the parent
   };
 
   return (
@@ -64,25 +66,18 @@ export function ColorWheel({ onColorSelect }: ColorWheelProps) {
             Z
           `;
 
-          const isSelected = selectedColor?.hex === color.hex;
-
-          // Calculate the "jutting out" effect
-          const translateX = isSelected ? 5 * Math.cos((startAngle + endAngle) / 2) : 0;
-          const translateY = isSelected ? 5 * Math.sin((startAngle + endAngle) / 2) : 0;
+          const isSelected = selectedColorId === color.id;
 
           return (
             <path
-              key={color.name}
+              key={color.id} // Use the unique ID as the key
               d={pathData}
               fill={color.hex}
-              stroke={isSelected ? "#000" : "#fff"}
+              stroke={isSelected ? "#000" : "#fff"} // Apply black border if selected
               strokeWidth={isSelected ? 2 : 1}
-              onClick={() => handleColorClick(color)}
+              onClick={() => handleColorClick(color)} // Pass the entire color object
               style={{
-                transition: "transform 0.3s ease, translate 0.3s ease",
-                transform: isSelected
-                  ? `scale(1.25) translate(${translateX}px, ${translateY}px)`
-                  : "scale(1) translate(0, 0)",
+                transition: "stroke-width 0.3s ease",
               }}
             />
           );
