@@ -3,7 +3,6 @@ import cv2
 
 
 
-
 def process_image(image):
     
     
@@ -13,11 +12,13 @@ def process_image(image):
     a_channel = lab_image[:, :, 1]
     b_channel = lab_image[:, :, 2]
 
-    return a_channel, b_channel
+    mask = cv2.inRange(image, (1, 1, 1), (255, 255, 255))
+
+    return a_channel, b_channel, mask
 
 
 
-def detect_undertone(a_channel, b_channel):
+def detect_undertone(a_channel, b_channel, mask):
 
     """
         hue angle lets us classify tones based on color theory using formula
@@ -32,25 +33,27 @@ def detect_undertone(a_channel, b_channel):
         is neutral
                             Chroma =  (a^2 + b^2)^0.5
     """
-    # Convert OpenCV Lab to theoretical Lab (pixel-wise)
-    a = a_channel - 128
-    b = b_channel - 128
+    # Convert OpenCV LAB to theoretical LAB (pixel-wise)
+    a = (a_channel - 128).astype(np.float32)
+    b = (b_channel - 128).astype(np.float32)
 
     # Compute pixel-wise hue and chroma
     hue_angles = np.degrees(np.arctan2(b, a))
     hue_angles[hue_angles < 0] += 360  # Normalize to [0°, 360°]
     chroma = np.sqrt(a**2 + b**2)
 
-    # Compute mean hue and chroma
-    mean_hue = np.mean(hue_angles)
-    print( mean_hue)
-    mean_chroma = np.mean(chroma)
-    print( mean_chroma)
+    # Apply the mask to exclude black pixels
+    valid_hue = hue_angles[mask > 0]
+    valid_chroma = chroma[mask > 0]
+
+    # Compute mean hue and chroma only for valid pixels
+    mean_hue = np.mean(valid_hue) if valid_hue.size > 0 else 0
+    mean_chroma = np.mean(valid_chroma) if valid_chroma.size > 0 else 0
 
     # Classify tone
     if mean_chroma < 5:  # Adjusted neutral threshold
         tone = "Neutral"
-    elif 0 <= mean_hue <= 50 or 320 <= mean_hue <= 360:  # Narrow warm range
+    elif 0 <= mean_hue <= 69 or 300 <= mean_hue <= 360:  # Narrow warm range
         tone = "Warm"
     else:
         tone = "Cool"
@@ -69,11 +72,13 @@ def classify_tone(image):
     """
     try:
         # Process the image to extract Lab channels
-        a_channel, b_channel = process_image(image)
+        a_channel, b_channel, mask = process_image(image)
         
         
         # Detect the undertone
-        tone, _, _ = detect_undertone(a_channel, b_channel)
+        tone, chroma, hue = detect_undertone(a_channel, b_channel, mask)
+        print(chroma)
+        print(hue)
         return tone
     except Exception as e:
         raise ValueError(f"Error processing image: {e}")
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     
     
     # Load an image for testing
-    image = cv2.imread("../ImageInput/undertoneImgs/coolneck.png")
+    image = cv2.imread("../ImageInput/undertoneImgs/warmneck.png")
     if image is None:
         raise ValueError("Invalid image file")
     
