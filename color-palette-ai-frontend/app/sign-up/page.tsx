@@ -53,6 +53,7 @@ const App: React.FC = () => {
         setError(data.error);
       } else {
         setResult(`Season: ${data.season}`);
+        console.log(result)
       }
     } catch (err: any) {
       setError(err.message);
