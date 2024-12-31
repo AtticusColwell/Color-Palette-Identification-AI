@@ -51,7 +51,7 @@ def remove_white_background_and_get_median(
 
     return result_img, median_color_rgb
 
-def get_shirt_base_color_kmeans(image_path, median_color_rgb, k=4, crop=None):
+def get_shirt_base_color_kmeans(img_rgb, median_color_rgb, k=4, crop=None):
     """
     Use k-means clustering to find the dominant color closest to the median color.
 
@@ -71,12 +71,6 @@ def get_shirt_base_color_kmeans(image_path, median_color_rgb, k=4, crop=None):
     closest_color_rgb : tuple
         The cluster center (R, G, B) closest to the median color.
     """
-    img = cv2.imread(image_path)
-    if img is None:
-        raise ValueError(f"Could not open {image_path}")
-
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
     if crop is not None:
         x, y, w, h = crop
         img_rgb = img_rgb[y:y+h, x:x+w]
@@ -92,7 +86,7 @@ def get_shirt_base_color_kmeans(image_path, median_color_rgb, k=4, crop=None):
 
     return tuple(closest_color_rgb)
 
-def process_image_with_combined_method(input_path: str, output_path: str = None, k=4, crop=None):
+def process_image_with_combined_method(img_rgb, output_path: str = None, k=4, crop=None):
     """
     Process an image by removing the white background, finding the median color,
     and identifying the dominant k-means cluster closest to the median color.
@@ -115,31 +109,30 @@ def process_image_with_combined_method(input_path: str, output_path: str = None,
     closest_color_rgb : tuple
         The closest k-means cluster center to the median color (R, G, B).
     """
-    img = cv2.imread(input_path)
-    if img is None:
-        raise ValueError(f"Could not read image from '{input_path}'")
+    print("starting process_image_with_combined_method")
+    try:
+        result, median_color_rgb = remove_white_background_and_get_median(img_rgb)
 
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        closest_color_rgb = get_shirt_base_color_kmeans(
+            img_rgb, median_color_rgb, k=k, crop=crop
+        )
 
-    result, median_color_rgb = remove_white_background_and_get_median(img_rgb)
+        if output_path:
+            result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(output_path, result_bgr)
+            print(f"Processed image saved to: {output_path}")
 
-    closest_color_rgb = get_shirt_base_color_kmeans(
-        input_path, median_color_rgb, k=k, crop=crop
-    )
+        print(f"Median color (RGB): {median_color_rgb}")
+        print(f"Closest color (RGB): {closest_color_rgb}")
 
-    if output_path:
-        result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(output_path, result_bgr)
-        print(f"Processed image saved to: {output_path}")
+        return closest_color_rgb
+    except Exception as e:
+        raise ValueError(f"Error processing image: {e}")
 
-    print(f"Median color (RGB): {median_color_rgb}")
-    print(f"Closest color (RGB): {closest_color_rgb}")
+# # Example usage
+# if __name__ == "__main__":
+#     input_path = "photos/clothes/image2.png"
+#     output_path = "output.png"  # Optional
+#     processed_image, closest_color = process_image_with_combined_method(input_path, output_path, k=5)
+#     print(f"Closest color to the median (RGB): {closest_color}")
 
-    return result, closest_color_rgb
-
-# Example usage
-if __name__ == "__main__":
-    input_path = "photos/clothes/image2.png"
-    output_path = "output.png"  # Optional
-    processed_image, closest_color = process_image_with_combined_method(input_path, output_path, k=5)
-    print(f"Closest color to the median (RGB): {closest_color}")
