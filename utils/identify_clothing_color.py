@@ -115,32 +115,36 @@ def process_image_with_combined_method(input_path: str, output_path: str = None,
     closest_color_rgb : tuple
         The closest k-means cluster center to the median color (R, G, B).
     """
-    img = cv2.imread(input_path)
-    if img is None:
-        raise ValueError(f"Could not read image from '{input_path}'")
+    print("starting process_image_with_combined_method")
+    try:
+        img = cv2.imread(input_path)
+        if img is None:
+            raise ValueError(f"Could not read image from '{input_path}'")
 
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    result, median_color_rgb = remove_white_background_and_get_median(img_rgb)
+        result, median_color_rgb = remove_white_background_and_get_median(img_rgb)
 
-    closest_color_rgb = get_shirt_base_color_kmeans(
-        input_path, median_color_rgb, k=k, crop=crop
-    )
+        closest_color_rgb = get_shirt_base_color_kmeans(
+            input_path, median_color_rgb, k=k, crop=crop
+        )
 
-    if output_path:
-        result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(output_path, result_bgr)
-        print(f"Processed image saved to: {output_path}")
+        if output_path:
+            result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(output_path, result_bgr)
+            print(f"Processed image saved to: {output_path}")
 
-    print(f"Median color (RGB): {median_color_rgb}")
-    print(f"Closest color (RGB): {closest_color_rgb}")
+        print(f"Median color (RGB): {median_color_rgb}")
+        print(f"Closest color (RGB): {closest_color_rgb}")
 
-    return result, closest_color_rgb
+        return closest_color_rgb
+    except Exception as e:
+        raise ValueError(f"Error processing image: {e}")
 
-# Example usage
-if __name__ == "__main__":
-    input_path = "photos/clothes/image2.png"
-    output_path = "output.png"  # Optional
-    processed_image, closest_color = process_image_with_combined_method(input_path, output_path, k=5)
-    print(f"Closest color to the median (RGB): {closest_color}")
+# # Example usage
+# if __name__ == "__main__":
+#     input_path = "photos/clothes/image2.png"
+#     output_path = "output.png"  # Optional
+#     processed_image, closest_color = process_image_with_combined_method(input_path, output_path, k=5)
+#     print(f"Closest color to the median (RGB): {closest_color}")
 

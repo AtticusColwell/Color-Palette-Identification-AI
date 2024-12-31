@@ -98,7 +98,7 @@ SEASONS = [
     },
     {
         "name": "Soft Summer",
-        "undertones": ["light cool", "neutral"],
+        "undertones": ["cool", "neutral"],
         # SOFT SUMMER: Higher slice
         "skin_min": (211, 191, 181),
         "skin_max": (220, 200, 190),
@@ -111,7 +111,7 @@ SEASONS = [
     # -------------------- AUTUMN --------------------
     {
         "name": "Soft Autumn",
-        "undertones": ["neutral", "light warm"],
+        "undertones": ["neutral", "warm"],
         # SOFT AUTUMN
         "skin_min": (160, 130, 110),
         "skin_max": (170, 140, 120),
@@ -179,7 +179,7 @@ SEASONS = [
     },
     {
         "name": "Cool Winter",
-        "undertones": ["cool", "light cool"],
+        "undertones": ["cool", "cool"],
         # COOL WINTER
         "skin_min": (171, 151, 161),
         "skin_max": (180, 160, 170),
@@ -224,10 +224,17 @@ def classify_season(skin_rgb, hair_rgb, eye_rgb, tone):
     Classify a person into a color season based on skin, hair, and eye RGB values,
     along with their undertone. If no exact match, find the closest match.
     """
+    print("classify_season triggered with following input")
+    print("skin_color:", skin_rgb)
+    print("eye color:", eye_rgb)
+    print("hair color", hair_rgb)
+    print("tone", tone)
+
     possible_matches = []
     distances = []
 
     for season in SEASONS:
+        
         if tone not in season["undertones"]:
             continue
         if (
@@ -248,13 +255,13 @@ def classify_season(skin_rgb, hair_rgb, eye_rgb, tone):
 
         total_distance = skin_distance + hair_distance + eye_distance
         distances.append((season["name"], total_distance))
-
+    print(possible_matches)
     if possible_matches:
         return possible_matches[0] if len(possible_matches) == 1 else possible_matches[0] + " (multiple matches?)"
     
     # If no exact match, return the closest match
     closest_match = min(distances, key=lambda x: x[1])
-    return f"Closest Match: {closest_match[0]}"
+    return f"{closest_match[0]}"
 
 # Example Usage
 if __name__ == "__main__":

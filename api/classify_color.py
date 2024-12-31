@@ -1,15 +1,14 @@
 from fastapi import FastAPI, File, UploadFile
 import numpy as np
-import cv2
 from PIL import Image
-from utils.getData import extract_features
-from utils.classify import classify_season
+from utils.identify_clothing_color import process_image_with_combined_method
+from utils.color_difference import color_is_allowed
 from io import BytesIO
 
 app = FastAPI()
 
 
-@app.post("/classify_season")
+@app.post("/api/classify_color")
 async def classify_season_api(file: UploadFile = File(...)):
     """
     Serverless function to classify a season based on an uploaded image.
@@ -29,20 +28,20 @@ async def classify_season_api(file: UploadFile = File(...)):
             raise ValueError("Invalid image file or incorrect number of channels (not RGB).")
 
         
-        features = extract_features(image_np)
-        print("Extracted Features:", features)  # Debug print
+        clothing_color = process_image_with_combined_method(image_np)
+        print("Clothing Color:", clothing_color)  # Debug print
 
-        skin_rgb = features["skin_color"]
-        hair_rgb = features["hair_color"]
-        eye_rgb = features["eye_color"]
-        tone = features["undertone"]
-        print("get data exited sucessfully")
+        if clothing_color is None or len(clothing_color) != 3:
+            raise ValueError("Could not identify clothing color.")
+        
+        print("identifying clothing color exited sucessfully")
 
-        season = classify_season(skin_rgb, hair_rgb, eye_rgb, tone)
+        allowed = color_is_allowed()
 
         return{
-            "season": season,
-            "message": "Color season classification successful."
+            "color is allowed (T/F)": allowed,
+            "RGB value of clothing": clothing_color,
+            "message": "Color identification successful."
         }
     except Exception as e:
         return {"error": str(e)}
