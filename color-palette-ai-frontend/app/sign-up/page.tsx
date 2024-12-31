@@ -51,7 +51,7 @@ const App: React.FC = () => {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -59,9 +59,16 @@ const App: React.FC = () => {
     if (error) {
       setError(error.message);
     } else {
-      setSuccess(
-        "Account created successfully! Please check your email for confirmation."
-      );
+      setSuccess("Account created successfully! Logging you in...");
+      // Wait a short time for the session to initialize
+      setTimeout(async () => {
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) {
+          setError("Failed to start a session. Please log in manually.");
+        } else {
+          router.push("/color-wheel"); // Redirect to the ColorWheelPage
+        }
+      }, 2000); // Allow some buffer for the session to start
     }
   };
 
@@ -191,8 +198,8 @@ const App: React.FC = () => {
                   Example Photo
                 </h4>
                 <img
-                  src="https://preview.redd.it/car-selfies-always-have-the-best-lighting-v0-940ak83ax33b1.jpg?width=1080&crop=smart&auto=webp&s=f4ac60e870706a03dcec631b81adcc4facc890c0"
-                  alt="Example photo showing good lighting and clear face visibility"
+                  src="https://example.com/example-photo.jpg"
+                  alt="Example photo"
                   className="h-48 w-full rounded-lg object-contain"
                 />
               </div>
@@ -230,4 +237,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
