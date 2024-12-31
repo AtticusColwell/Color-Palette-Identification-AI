@@ -224,6 +224,10 @@ def classify_season(skin_rgb, hair_rgb, eye_rgb, tone):
     Classify a person into a color season based on skin, hair, and eye RGB values,
     along with their undertone. If no exact match, find the closest match.
     """
+    print("classify_season triggered with following input")
+    print("skin_color:", skin_rgb)
+    print("eye color:")
+
     possible_matches = []
     distances = []
 
