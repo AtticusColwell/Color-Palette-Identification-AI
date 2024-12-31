@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Upload, Camera } from "lucide-react";
+import { Upload, Camera, ArrowLeft } from "lucide-react"; // Import ArrowLeft for the back button icon
 import { useDropzone } from "react-dropzone";
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { supabase } from "./supabaseClient";
 
 const App: React.FC = () => {
+  const router = useRouter(); // Initialize router
   const [formData, setFormData] = useState<{
     firstName: string;
     lastName: string;
@@ -57,13 +59,24 @@ const App: React.FC = () => {
     if (error) {
       setError(error.message);
     } else {
-      setSuccess("Account created successfully! Please check your email for confirmation.");
+      setSuccess(
+        "Account created successfully! Please check your email for confirmation."
+      );
     }
   };
 
   return (
     <main className="min-h-screen bg-gray-50 p-6 md:p-12">
-      <div className="mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-sm">
+      <div className="relative mx-auto max-w-6xl rounded-xl bg-white p-6 shadow-sm">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/")} // Navigate to the homepage
+          className="absolute top-4 left-4 flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+        >
+          <ArrowLeft size={16} />
+          Back
+        </button>
+
         <h1 className="mb-8 text-center text-3xl font-bold text-gray-900">
           Create Your Account
         </h1>
