@@ -17,17 +17,20 @@ def color_difference_cie2000(lch1, lch2):
 
 def color_is_allowed(color, color_palette, threshold=40):
     # Load the JSON color palettes
-    with open('palettes.json', 'r') as f:
-        color_palettes = json.load(f)
-    
-    allowed_colors = color_palettes[color_palette]
-    color_lch = rgb_to_lch(color)
+    try:
+        with open('Color-AI/palettes.json', 'r') as f:
+            color_palettes = json.load(f)
+        
+        allowed_colors = color_palettes[color_palette]
+        color_lch = rgb_to_lch(color)
 
-    for allowed_color in allowed_colors:
-        allowed_color_lch = rgb_to_lch(hex_to_rgb(allowed_color))
-        if color_difference_cie2000(color_lch, allowed_color_lch) < threshold:
-            return True
-    return False
+        for allowed_color in allowed_colors:
+            allowed_color_lch = rgb_to_lch(hex_to_rgb(allowed_color))
+            if color_difference_cie2000(color_lch, allowed_color_lch) < threshold:
+                return True
+        return False
+    except Exception as e:
+        raise ValueError(f"Error loading color palettes: {e}")
 
 
 

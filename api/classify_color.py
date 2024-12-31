@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, Form, UploadFile
 import numpy as np
 from PIL import Image
 from utils.identify_clothing_color import process_image_with_combined_method
@@ -9,7 +9,7 @@ app = FastAPI()
 
 
 @app.post("/api/classify_color")
-async def classify_season_api(file: UploadFile = File(...)):
+async def classify_season_api(file: UploadFile = File(...), season: str = Form(...)):
     """
     Serverless function to classify a season based on an uploaded image.
     """
@@ -36,7 +36,7 @@ async def classify_season_api(file: UploadFile = File(...)):
         
         print("identifying clothing color exited sucessfully")
 
-        allowed = color_is_allowed()
+        allowed = color_is_allowed(clothing_color, season)
 
         return{
             "color is allowed (T/F)": allowed,
