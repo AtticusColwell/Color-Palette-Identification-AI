@@ -9,7 +9,7 @@ app = FastAPI()
 
 
 @app.post("/api/classify_color")
-async def classify_season_api(file: UploadFile = File(...), season: str = Form(...)):
+async def classify_season_api(file: UploadFile = File(...), season_dict: dict = Form(...)):
     """
     Serverless function to classify a season based on an uploaded image.
     """
@@ -17,6 +17,8 @@ async def classify_season_api(file: UploadFile = File(...), season: str = Form(.
         print(f"Received file: {file.filename}")
         # Read the uploaded image file
         contents = await file.read()
+
+        season = season_dict["season"]
 
         pil_image = Image.open(BytesIO(contents)).convert("RGB")
         print("PIL Image Mode:", pil_image.mode)  # Debug print
