@@ -24,7 +24,7 @@ const ColorWheelPage = () => {
 
       if (error) {
         console.error("Error fetching session:", error.message);
-        router.push("/signup"); // Redirect to signup if an error occurs
+        router.push("/sign-up"); // Redirect to signup if an error occurs
         return;
       }
 

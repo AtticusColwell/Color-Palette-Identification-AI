@@ -25,10 +25,38 @@ const App: React.FC = () => {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
 
-  const onDrop = (acceptedFiles: File[]) => {
+  const onDrop = async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     setPreview(URL.createObjectURL(file));
+    setError(null);
+    setResult(null);
+
+    // Create a FormData object to send the file to the serverless function
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/classify_season", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.error) {
+        setError(data.error);
+      } else {
+        setResult(`Season: ${data.season}`);
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
   };
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -229,6 +257,8 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
+            {result && <p className="mt-4 text-green-600">{result}</p>}
+            {error && <p className="mt-4 text-red-600">{error}</p>}
           </div>
         </div>
       </div>
@@ -237,3 +267,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
