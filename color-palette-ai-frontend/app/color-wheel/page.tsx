@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation"; // Import the useRouter hook
 import { Home } from "lucide-react";
 import { ColorWheel } from "@components/ColorWheel";
 import { UserProfile } from "@components/UserProfile";
@@ -11,11 +12,16 @@ interface Color {
 
 const ColorWheelPage = () => {
   const [selectedColor, setSelectedColor] = useState<Color | null>(null);
+  const router = useRouter(); // Initialize the router
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex flex-col items-center">
       <nav className="w-full px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center">
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity">
+        {/* Navigate to the home page on click */}
+        <button
+          onClick={() => router.push("/")} // Navigate to the home page
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90 transition-opacity"
+        >
           <Home size={20} />
           <span>Color Palette AI</span>
         </button>
