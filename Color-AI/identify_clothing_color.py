@@ -143,3 +143,4 @@ if __name__ == "__main__":
     output_path = "output.png"  # Optional
     processed_image, closest_color = process_image_with_combined_method(input_path, output_path, k=5)
     print(f"Closest color to the median (RGB): {closest_color}")
+
