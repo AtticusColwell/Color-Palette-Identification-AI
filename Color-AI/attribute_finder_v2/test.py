@@ -27,6 +27,8 @@ def vis_parsing_maps(im, parsing_anno, stride, save_im=False, save_path='vis_res
                    [255, 255, 0], [255, 255, 85], [255, 255, 170],
                    [255, 0, 255], [255, 85, 255], [255, 170, 255],
                    [0, 255, 255], [85, 255, 255], [170, 255, 255]]
+    # mask dictionary: 0 = background, 1 = skin, 2 = r-eyebrow, 3 = l-eyebrow, 4 = r-eye, 5 = l-eye,  6-?, 7=l-ear, 8=?
+    # 10 = nose, 12 = upper lip, 13=bottom lip
 
     im = np.array(im)
     vis_im = im.copy().astype(np.uint8)
@@ -100,33 +102,52 @@ def get_skin_color(image, parsing):
         return median_color
 
 def get_undertones(image, parsing):
-    # expects an opened image
-    # returns the underton: warm, cool, neutral
-    neck_mask = (parsing == 2).astype(np.uint8)*255
- 
-
-    #neck_pixels = cv2.bitwise_and(image, image, mask=neck_mask.astype(np.uint8)*255) 
-    neck_pixels = cv2.bitwise_and(image, image, mask=neck_mask)
-    #print(neck_pixels.size)
-
+    """
+    Expects an opened image and parsing mask.
+    Returns the undertone: warm, cool, neutral.
+    """
+    # Define the neck mask
+    neck_mask = (parsing == 14)  # Neck mask
+    neck_pixels = image[neck_mask]
     
-    if neck_pixels.size == 0:
-        #TODO: if person has beard, this is a problem
-        skin_mask = (parsing == 0)
-        skin_pixels = cv2.bitwise_and(image, image, mask=skin_mask.astype(np.uint8) * 255)
-        #print(skin_mask)
-
-        #print("rahhhhhhh")
+    # Check if the neck mask is sufficiently large
+    min_neck_pixels = 500  # Define a threshold for a "reasonable" size
+    if neck_pixels.size < min_neck_pixels:
+        # Switch to the skin mask if neck mask is too small
+        print("Neck mask too small, switching to skin mask.")
+        skin_mask = (parsing == 1)  # Skin mask
+        skin_pixels = image[skin_mask]
+        
+        # Check if the skin mask has valid pixels
         if skin_pixels is None or skin_pixels.size == 0:
-            assert False, "No skin pixels found in the mask."
+            raise ValueError("No skin pixels found in the mask.")
         else:
-            # Compute the median color
-            tone = classify_tone(skin_pixels)
+            # Create a masked image for the skin
+            skin_masked_image = np.zeros_like(image)
+            skin_masked_image[skin_mask] = image[skin_mask]
+            skin_masked_image_bgr = cv2.cvtColor(skin_masked_image, cv2.COLOR_RGB2BGR)
+
+            # Display the skin-masked image (optional)
+            cv2.imshow("Skin Masked Image", skin_masked_image_bgr)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+            # Compute the tone using the skin mask
+            tone = classify_tone(skin_masked_image_bgr)
             return tone
     else:
-        # Compute the median color
-        #print(neck_pixels)
-        tone = classify_tone(neck_pixels)
+        # Create a masked image for the neck
+        masked_image = np.zeros_like(image)  # Create a black image
+        masked_image[neck_mask] = image[neck_mask]  # Apply the masked pixels
+        masked_image_bgr = cv2.cvtColor(masked_image, cv2.COLOR_RGB2BGR)
+
+        # Display the neck-masked image (optional)
+        cv2.imshow("Neck Masked Image", masked_image_bgr)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        # Compute the tone using the neck mask
+        tone = classify_tone(masked_image_bgr)
         return tone
 
 def evaluate(respth='./res/test_res', dspth='./data', cp='model_final_diss.pth'):
@@ -169,7 +190,7 @@ def evaluate(respth='./res/test_res', dspth='./data', cp='model_final_diss.pth')
             print("Hair Color:", get_hair_color(np_image, parsing))
             print("Eye Color:", get_eye_color(np_image, parsing)) 
             print("Skin Color:", get_skin_color(np_image, parsing))
-            print("Undertones:", get_undertones(CVimage, parsing))
+            print("Undertones:", get_undertones(np_image, parsing))
 
             vis_parsing_maps(image, parsing, stride=1, save_im=True, save_path=osp.join(respth, image_path))
             
