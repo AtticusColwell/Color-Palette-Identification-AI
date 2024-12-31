@@ -1,68 +1,145 @@
-"""
-Identify the dominant (base) color of a garment in an image.
+import cv2
+import numpy as np
 
-Steps:
-1. Remove the background using 'rembg'.
-2. Extract the dominant color with 'colorthief'.
-
-Usage:
-    python get_dominant_color.py --input path/to/clothing_image.jpg --output output.png
-"""
-
-import argparse
-import os
-from colorthief import ColorThief
-from io import BytesIO
-from PIL import Image
-import backgroundremover
-
-backgroundremover.remove_background_from_img_file(
-    input_path="clothing.jpg",
-    output_path="clothing_nobg.png"
-)
-
-def remove_background(input_path: str, output_path: str) -> None:
+def remove_white_background_and_get_median(
+    img: np.ndarray,
+    white_threshold: int = 250,
+    make_transparent: bool = False
+):
     """
-    Removes the background from the input image and saves the result to output_path.
+    Remove near-white pixels and compute the median color of the remaining region.
+
+    Parameters:
+    -----------
+    img : np.ndarray
+        RGB image loaded by OpenCV.
+    white_threshold : int
+        Pixel is considered "white" if R, G, B >= this value.
+    make_transparent : bool
+        If True, output image will have an alpha channel for removed background.
+
+    Returns:
+    --------
+    result_img : np.ndarray
+        The image with background removed (black or transparent).
+    median_color_rgb : tuple
+        The median color (R, G, B) of the non-white region.
     """
-    # Read original image
-    with open(input_path, 'rb') as f:
-        input_bytes = f.read()
-    
-    # Remove the background
-    result_bytes = remove(input_bytes)
-    
-    # Save the background-removed image
-    with open(output_path, 'wb') as f:
-        f.write(result_bytes)
 
+    lower_bound = np.array([white_threshold, white_threshold, white_threshold], dtype=np.uint8)
+    upper_bound = np.array([255, 255, 255], dtype=np.uint8)
+    mask_white = cv2.inRange(img, lower_bound, upper_bound)
 
-def get_dominant_color(image_path: str, quality: int = 1):
+    subject_mask = cv2.bitwise_not(mask_white)
+
+    if not make_transparent:
+        result_img = cv2.bitwise_and(img, img, mask=subject_mask)
+    else:
+        r, g, b = cv2.split(img)
+        alpha = subject_mask
+        result_img = cv2.merge((r, g, b, alpha))
+
+    subject_pixels = img[subject_mask == 255]
+
+    if len(subject_pixels) == 0:
+        median_color_rgb = (0, 0, 0)
+    else:
+        median_r = np.median(subject_pixels[:, 0])
+        median_g = np.median(subject_pixels[:, 1])
+        median_b = np.median(subject_pixels[:, 2])
+        median_color_rgb = (int(median_r), int(median_g), int(median_b))
+
+    return result_img, median_color_rgb
+
+def get_shirt_base_color_kmeans(image_path, median_color_rgb, k=4, crop=None):
     """
-    Returns the dominant color of the image as an (R, G, B) tuple.
+    Use k-means clustering to find the dominant color closest to the median color.
 
-    'quality' is an optional parameter in ColorThief:
-    - Lower quality (1) is faster but less accurate.
-    - Higher quality means more pixel sampling (slower).
+    Parameters:
+    -----------
+    image_path : str
+        Path to the input image.
+    median_color_rgb : tuple
+        The median color (R, G, B) from the previous step.
+    k : int
+        Number of clusters for k-means.
+    crop : tuple, optional
+        Region to crop as (x, y, w, h).
+
+    Returns:
+    --------
+    closest_color_rgb : tuple
+        The cluster center (R, G, B) closest to the median color.
     """
-    color_thief = ColorThief(image_path)
-    # get_color returns the dominant color in (R, G, B)
-    return color_thief.get_color(quality=quality)
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Could not open {image_path}")
 
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def colors(input_path):    
-    # 1. Remove background
-    print(f"Removing background from {input_path}...")
-    remove_background(input_path, output_path)
+    if crop is not None:
+        x, y, w, h = crop
+        img_rgb = img_rgb[y:y+h, x:x+w]
 
-    
+    pixels = img_rgb.reshape(-1, 3).astype(np.float32)
 
-    # 2. Compute dominant color
-    print(f"Extracting dominant color from {output_path}...")
-    dominant_color = get_dominant_color(output_path, quality=1)
-    
-    print(f"Dominant (base) color is: {dominant_color} (R, G, B)")
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    _, labels, centers = cv2.kmeans(pixels, k, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
 
+    distances = np.linalg.norm(centers - np.array(median_color_rgb), axis=1)
+    closest_idx = np.argmin(distances)
+    closest_color_rgb = centers[closest_idx].astype(int)
 
+    return tuple(closest_color_rgb)
+
+def process_image_with_combined_method(input_path: str, output_path: str = None, k=4, crop=None):
+    """
+    Process an image by removing the white background, finding the median color,
+    and identifying the dominant k-means cluster closest to the median color.
+
+    Parameters:
+    -----------
+    input_path : str
+        Path to the input image.
+    output_path : str, optional
+        Path to save the processed image.
+    k : int
+        Number of clusters for k-means.
+    crop : tuple, optional
+        Region to crop as (x, y, w, h).
+
+    Returns:
+    --------
+    result_img : np.ndarray
+        The processed image with the white background removed.
+    closest_color_rgb : tuple
+        The closest k-means cluster center to the median color (R, G, B).
+    """
+    img = cv2.imread(input_path)
+    if img is None:
+        raise ValueError(f"Could not read image from '{input_path}'")
+
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    result, median_color_rgb = remove_white_background_and_get_median(img_rgb)
+
+    closest_color_rgb = get_shirt_base_color_kmeans(
+        input_path, median_color_rgb, k=k, crop=crop
+    )
+
+    if output_path:
+        result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(output_path, result_bgr)
+        print(f"Processed image saved to: {output_path}")
+
+    print(f"Median color (RGB): {median_color_rgb}")
+    print(f"Closest color (RGB): {closest_color_rgb}")
+
+    return result, closest_color_rgb
+
+# Example usage
 if __name__ == "__main__":
-    main()
+    input_path = "photos/clothes/image2.png"
+    output_path = "output.png"  # Optional
+    processed_image, closest_color = process_image_with_combined_method(input_path, output_path, k=5)
+    print(f"Closest color to the median (RGB): {closest_color}")
