@@ -3,10 +3,11 @@ import json
 
 def test_classify_season_api():
     # URL of your local API
-    url = "http://127.0.0.1:8000/classify_season"
+    url = "http://127.0.0.1:8000/api/classify_season"
 
     # Path to the test image
-    test_image_path = "sample_inputs/valid_face_3.png"
+    test_image_path = "sample_inputs/valid_face_2.png"
+    
 
     # Read the test image as binary
     with open(test_image_path, "rb") as file:

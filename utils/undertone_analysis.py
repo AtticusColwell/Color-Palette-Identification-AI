@@ -13,6 +13,7 @@ def process_image(image):
     Returns:
         tuple: A-channel, B-channel, and mask of valid pixels.
     """
+    print("image shape recived:", image.shape)
     # Convert BGR image to LAB color space
     lab_image = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
     a_channel = lab_image[:, :, 1]
@@ -55,11 +56,11 @@ def detect_undertone(a_channel, b_channel, mask):
 
     # Classify tone based on mean hue and chroma
     if mean_chroma < 5:  # Threshold for neutral tones
-        tone = "Neutral"
+        tone = "neutral"
     elif 0 <= mean_hue <= 69 or 300 <= mean_hue <= 360:  # Warm tone ranges
-        tone = "Warm"
+        tone = "warm"
     else:  # Remaining range is cool
-        tone = "Cool"
+        tone = "cool"
 
     return tone, mean_chroma, mean_hue
 
@@ -74,6 +75,8 @@ def classify_tone(image):
     Returns:
         str: The detected tone ('Warm', 'Cool', 'Neutral').
     """
+    print("starting undertone_analysis function")
+    
     try:
         # Process the image to extract LAB channels and mask
         a_channel, b_channel, mask = process_image(image)
