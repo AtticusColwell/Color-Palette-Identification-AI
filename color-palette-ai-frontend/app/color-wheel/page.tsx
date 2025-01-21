@@ -27,9 +27,9 @@ const ColorWheelPage = () => {
         router.push("/sign-up"); // Redirect to signup if an error occurs
         return;
       }
-
+      
       if (!session?.session) {
-        router.push("/signup"); // Redirect if no session
+        //router.push("/sign-up"); // Redirect if no session
       } else {
         setUser(session.session.user);
       }
