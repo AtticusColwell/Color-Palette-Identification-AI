@@ -4,8 +4,19 @@ import cv2
 
 
 def process_image(image):
+    '''
+    Processes the input image by converting it to the LAB color space and extracting
+    the 'a' and 'b' channels for chromaticity analysis.
     
-    
+    Args:
+        image (np.ndarray): Input image in BGR format.
+
+    Returns:
+        tuple: A tuple containing:
+            - a_channel (np.ndarray): The 'a' channel of the LAB image.
+            - b_channel (np.ndarray): The 'b' channel of the LAB image.
+            - mask (np.ndarray): Binary mask to exclude invalid pixels.
+    '''
     #convert BRG image to lab
     lab_image = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
     #extract a and b channels

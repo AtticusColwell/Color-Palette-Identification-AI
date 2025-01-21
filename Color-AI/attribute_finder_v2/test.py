@@ -17,7 +17,7 @@ from UnderToneAnalysis import classify_tone
 
 
 def vis_parsing_maps(im, parsing_anno, stride, save_im=False, save_path='vis_results/parsing_map_on_im.jpg'):
-    # Colors for all 20 parts
+    # Colors for all 20 parts of the face we segment
     part_colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0],
                    [255, 0, 85], [255, 0, 170],
                    [0, 255, 0], [85, 255, 0], [170, 255, 0],
@@ -151,7 +151,7 @@ def get_undertones(image, parsing):
         return tone
 
 def evaluate(respth='./res/test_res', dspth='./data', cp='model_final_diss.pth'):
-
+    
     if not os.path.exists(respth):
         os.makedirs(respth)
 
